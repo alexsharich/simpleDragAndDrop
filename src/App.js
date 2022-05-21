@@ -5,68 +5,86 @@ import './App.css';
 
 function App() {
 
-  const [cardList, setCardList] = useState([
-    { id: 1, order: 3, text: 'card 3' },
-    { id: 2, order: 1, text: 'card 1' },
-    { id: 3, order: 2, text: 'card 2' },
-    { id: 4, order: 4, text: 'card 4' },
+  const [boards, setBoards] = useState([
+    { id: 1, title: 'Сделать', items: [{ id: 1, title: 'Покормить кота' }, { id: 2, title: 'Полить цветы' }, { id: 3, title: 'Приготовить ужин' }] },
+    { id: 2, title: 'В процессе', items: [{ id: 4, title: 'Задачи на факториал' }, { id: 5, title: 'Ревью кода' }, { id: 6, title: 'Задачи на фибоначчи' }] },
+    { id: 3, title: 'Сделано', items: [{ id: 7, title: 'Прогулка в парке' }, { id: 8, title: 'Встреча с друзьями' }, { id: 9, title: 'Сон' }] },
   ])
-  const [currentCard, setCurrentCard] = useState(null)
+  const [currentBoard, setCurrentBoard] = useState(null)
+  const [currentItem, setCurrentItem] = useState(null)
 
-  const dragStartHandler = (e, card) => {
-    console.log('start', card)
-    setCurrentCard(card)
-  }
-  const dragLeaveHandler = (e) => {
-
-  }
-  const dragEndHandler = (e) => {
-    e.target.style.background = 'white'
-  }
   const dragOverHandler = (e) => {
     e.preventDefault()
-    e.target.style.background = 'lightgray'
+    if (e.target.className == 'item') {
+      e.target.style.boxShadow = '0 4px 3px gray'
+    }
   }
-  const dropHandler = (e, card) => {
+  const dragLeaveHandler = (e) => {
+    e.target.style.boxShadow = 'none'
+  }
+  const dragStartHandler = (e, board, item) => {
+    setCurrentBoard(board)
+    setCurrentItem(item)
+  }
+  const dragEndHandler = (e) => {
+    e.target.style.boxShadow = 'none'
+  }
+  const dropHandler = (e, board, item) => {
     e.preventDefault()
-    setCardList(cardList.map(c => {
-      if (c.id === card.id) {
-        return { ...c, order: currentCard.order }
+    const currentIndex = currentBoard.items.indexOf(currentItem)
+    currentBoard.items.splice(currentIndex, 1)
+    const dropIndex = board.items.indexOf(item)
+    board.items.splice(dropIndex + 1, 0, currentItem)
+    setBoards(boards.map(b => {
+      if (b.id === board.id) {
+        return board
       }
-      if (c.id === currentCard.id) {
-        return { ...c, order: card.order }
+      if (b.id === currentBoard.id) {
+        return currentBoard
       }
-      return c
+      return b
     }))
-    e.target.style.background = 'white'
+    e.target.style.boxShadow = 'none'
   }
-
-  const sortCards = (a,b)=>{
-if(a.order > b.order){
-  return 1
-} else {
-  return -1
-}
+  const dropCardHandler = (e, board) => {
+    board.items.push(currentItem)
+    const currentIndex = currentBoard.items.indexOf(currentItem)
+    currentBoard.items.splice(currentIndex, 1)
+    setBoards(boards.map(b => {
+      if (b.id === board.id) {
+        return board
+      }
+      if (b.id === currentBoard.id) {
+        return currentBoard
+      }
+      return b
+    }))
+    e.target.style.boxShadow = 'none'
   }
 
   return (
     <div className="App">
-      {cardList.sort(sortCards).map(card =>
-        <div
-          key={card.id}
-          className='card'
-          draggable={true}
-          onDragStart={(e) => dragStartHandler(e, card)}
-          onDragLeave={(e) => dragLeaveHandler(e)}
-          onDragEnd={(e) => dragEndHandler(e)}
+      {boards.map(board =>
+        <div className='board'
           onDragOver={(e) => dragOverHandler(e)}
-          onDrop={(e) => dropHandler(e, card)}
+          onDrop={(e) => dropCardHandler(e, board)}
         >
-          {card.text}
+          <div className='board__title'> {board.title}</div>
+          {board.items.map(item =>
+            <div
+              onDragOver={(e) => dragOverHandler(e)}
+              onDragLeave={(e) => dragLeaveHandler(e)}
+              onDragStart={(e) => dragStartHandler(e, board, item)}
+              onDragEnd={(e) => dragEndHandler(e)}
+              onDrop={(e) => dropHandler(e, board, item)}
+              draggable={true}
+              className='item'>
+              {item.title}
+            </div>
+          )}
         </div>
-      )
-      }
-    </div>
+      )}
+    </div >
   );
 }
 
